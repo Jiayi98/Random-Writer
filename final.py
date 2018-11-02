@@ -180,6 +180,10 @@ http://www.gutenberg.org/cache/epub/100/pg100.txt
 from enum import Enum, unique
 from collections import Iterable
 import requests
+import random
+import graph
+import pickle
+import itertools
 
 class RandomWriter(object):
     """A Markov chain based random data generator.
@@ -200,8 +204,15 @@ class RandomWriter(object):
         self.level = level
         self.data = None
         self.graph = None
-        self.token = Tokenization(0) if tokenization is None else tokenization
+        self.token = Tokenization(0)
+        if tokenization == Tokenization.word.name:
+            self.token = Tokenization(1)
+        elif tokenization == Tokenization.character.name:
+            self.token = Tokenization(2)
+        elif tokenization == Tokenization.byte.name:
+            self.token = Tokenization(3)
         
+        self.output = []
         raise NotImplementedError
 
     def generate(self):
@@ -215,6 +226,16 @@ class RandomWriter(object):
         new starting node at random and continuing.
 
         """
+        start = random.choice(list(self.graph.dict.keys()))
+        self.graph.current = start
+        while True and self.graph is not None:
+            if self.graph.getNeighbors(start).total == 0:
+                start = random.choice(list(self.graph.dict.keys()))
+                self.graph.current = start
+            else:
+                self.graph.current = self.graph.randomSelect()
+                yield self.graph.current
+
         
         raise NotImplementedError
 
@@ -234,6 +255,24 @@ class RandomWriter(object):
 
         Make sure to open the file in the appropriate mode.
         """
+        g = self.generate()
+        if self.token == Tokenization(2) or self.token == Tokenization(3):
+            if self.token == Tokenization(3)
+                with open(filename, 'wb') as f:
+                    for i in range(amount):
+                        f.write(bytes(next(g))) # next(g)?????
+            else:
+                with open(filename, 'w', encoding = "utf-8") as f:
+                    for i in range(amount):
+                        f.write(str(next(g)))
+        else:
+            g = itertools.islice(g, amount)
+            with open(filename, 'w', encoding = "utf-8") as f:
+                for i in range(amount):
+                    f.write(next(g))
+        
+        
+        
         raise NotImplementedError
 
     def save_pickle(self, filename_or_file_object):
@@ -247,7 +286,14 @@ class RandomWriter(object):
         in binary mode.
 
         """
-        raise NotImplementedError
+        if isinstance(filename_or_file_object,str):
+            d = pickle.dump(self, filename_or_file_object)
+       
+        else:
+             # file-like object
+            with open(filename_or_file_object, 'wb') as f:
+                pickle.dump(self,f)
+
 
     @classmethod
     def load_pickle(cls, filename_or_file_object):
@@ -264,7 +310,13 @@ class RandomWriter(object):
         in binary mode.
 
         """
-        raise NotImplementedError
+        if isinstance(filename_or_file_object,str):
+            d = pickle.load(self, filename_or_file_object)
+        else:
+            # file-like object
+            with open(filename_or_file_object, 'rb') as f:
+                d = pickle.load(f)
+        return d
 
     def train_url(self, url):
         """Compute the probabilities based on the data downloaded from url.
@@ -317,11 +369,11 @@ class RandomWriter(object):
         if self.token == Tokenization(0):
             if not(isinstance(data, Iterable)):
                 raise TypeError("data should be iterable")
-
+    
         elif self.token == Tokenization (1) or self.token == Tokenization(2):
             if not(isinstance(data, str)):
                 raise TypeError("data should be string")
-                        
+
         elif self.token == Tokenization(3):
             if not(isinstance(data, bytes)):
                 raise TypeError("data should be string")
@@ -332,14 +384,16 @@ class RandomWriter(object):
             it = data.split()
         else:
             it = list(data)
-
+        self.data = it
+        
         for i in range(0, len(it) - self.level + 1): # [0,length of it list - level]
             # credit from https://il.pycon.org/2016/static/sessions/omer-nevo.pdf
-            current_state = tuple(it[i:i+self.level])# get it[i],it[i+1],...,it[i+level-1]
+            state = tuple(it[i:i+self.level])# get it[i],it[i+1],...,it[i+level-1]
             if self.graph is None:
-                self.graph = graph.Graph(current_state)
+                self.graph = Graph(state)
             else:
-                self.graph.addVertex(current_state)
+                self.graph.addNeighbor(state)
+        
 
         raise NotImplementedError
 
