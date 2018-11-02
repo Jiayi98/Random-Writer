@@ -181,7 +181,7 @@ from enum import Enum, unique
 from collections import Iterable
 import requests
 import random
-import graph
+from graph import Graph
 import pickle
 import itertools
 
@@ -203,7 +203,7 @@ class RandomWriter(object):
         """
         self.level = level
         self.data = None
-        self.graph = None
+        self.g = None
         self.token = Tokenization(0)
         if tokenization == Tokenization.word.name:
             self.token = Tokenization(1)
@@ -213,7 +213,6 @@ class RandomWriter(object):
             self.token = Tokenization(3)
         
         self.output = []
-        raise NotImplementedError
 
     def generate(self):
         """Generate tokens using the model.
@@ -226,18 +225,25 @@ class RandomWriter(object):
         new starting node at random and continuing.
 
         """
-        start = random.choice(list(self.graph.dict.keys()))
-        self.graph.current = start
-        while True and self.graph is not None:
-            if self.graph.getNeighbors(start).total == 0:
-                start = random.choice(list(self.graph.dict.keys()))
-                self.graph.current = start
-            else:
-                self.graph.current = self.graph.randomSelect()
-                yield self.graph.current
+        #print("------------DEBUG-------------")
+        start = random.choice(list(self.g.dict.keys()))
+        self.g.current = start
+        while True:
+            if self.g is not None:
+                #print(self.g.current)
+                if self.g.getNeighbors(self.g.current).total == 0:
+                    #print("No neighbors!!!")
+                    start = random.choice(list(self.g.dict.keys()))
+                    self.g.current = start
+                    #print(self.g.current, "new start state")
+                else:
+                    #print("Has neighbor!!!")
+                    self.g.current = self.g.getSelected()
+                    #print("random selected!!!!!!!")
+                    yield self.g.current
 
         
-        raise NotImplementedError
+        
 
     def generate_file(self, filename, amount):
         """Write a file using the model.
@@ -257,7 +263,7 @@ class RandomWriter(object):
         """
         g = self.generate()
         if self.token == Tokenization(2) or self.token == Tokenization(3):
-            if self.token == Tokenization(3)
+            if self.token == Tokenization(3):
                 with open(filename, 'wb') as f:
                     for i in range(amount):
                         f.write(bytes(next(g))) # next(g)?????
@@ -269,11 +275,9 @@ class RandomWriter(object):
             g = itertools.islice(g, amount)
             with open(filename, 'w', encoding = "utf-8") as f:
                 for i in range(amount):
-                    f.write(next(g))
+                    f.write(str(next(g)))
         
         
-        
-        raise NotImplementedError
 
     def save_pickle(self, filename_or_file_object):
         """Write this model out as a Python pickle.
@@ -286,7 +290,7 @@ class RandomWriter(object):
         in binary mode.
 
         """
-        if isinstance(filename_or_file_object,str):
+        if hasattr(filename_or_file_object, "write"):
             d = pickle.dump(self, filename_or_file_object)
        
         else:
@@ -310,7 +314,7 @@ class RandomWriter(object):
         in binary mode.
 
         """
-        if isinstance(filename_or_file_object,str):
+        if hasattr(filename_or_file_object,"write"):
             d = pickle.load(self, filename_or_file_object)
         else:
             # file-like object
@@ -344,7 +348,6 @@ class RandomWriter(object):
 
         
         
-        raise NotImplementedError 
 
     def train_iterable(self, data):
         """Compute the probabilities based on the data given.
@@ -369,11 +372,9 @@ class RandomWriter(object):
         if self.token == Tokenization(0):
             if not(isinstance(data, Iterable)):
                 raise TypeError("data should be iterable")
-    
         elif self.token == Tokenization (1) or self.token == Tokenization(2):
             if not(isinstance(data, str)):
                 raise TypeError("data should be string")
-
         elif self.token == Tokenization(3):
             if not(isinstance(data, bytes)):
                 raise TypeError("data should be string")
@@ -385,24 +386,25 @@ class RandomWriter(object):
         else:
             it = list(data)
         self.data = it
+        #print(it)
         
         for i in range(0, len(it) - self.level + 1): # [0,length of it list - level]
             # credit from https://il.pycon.org/2016/static/sessions/omer-nevo.pdf
             state = tuple(it[i:i+self.level])# get it[i],it[i+1],...,it[i+level-1]
-            if self.graph is None:
-                self.graph = Graph(state)
+            if self.g is None:
+                self.g = Graph(state)
             else:
-                self.graph.addNeighbor(state)
+                self.g.addNeighbor(state)
+        #for k,v in self.g.dict.items():
+        #    print(k,v.dict)
         
 
-        raise NotImplementedError
 
-    @unique
-    class Tokenization(Enum):
-        word = 1
-        character = 2
-        byte = 3
-        none = 0
+class Tokenization(Enum):
+    word = 1
+    character = 2
+    byte = 3
+    none = 0
 
 """Modules you will want to look at:
 * enum

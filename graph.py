@@ -1,17 +1,75 @@
-class MorkovChainGraph(object):
+import random
+
+class Graph(object):
     """A constuctor that can read the input
     and build according probability model
+    dict:{state:Neighbors}
+    Neighbors:{token:freq}
     """
-    def __init__(self, level.......):
+    
+    def __init__(self,state):
+        self.dict = {} # key is state, value is its Neighbors
+        self.current = state
+        self.dict[self.current] = Neighbor(state)
 
-    def read(self,......):
+            
+    def addNeighbor(self,state):
+        if state not in self.dict:
+            self.dict[state] = Neighbor(state)
+        self.dict[self.current].add(state)
+        self.current = state
 
-    """ A node class: state is a node; directed edge with weight(probability) from state to next token; next is the character with the most probability following the state; newState is the sate that derives from the original state and the new character
-    """
-    class Node:
-        def __init__(self,.........):
-            self.state
-            self.edge
-            self.next
-            self.newState
+    def getNeighbors(self,state):
+        return self.dict[state]
+
+    # return a token that is randomly selected according to weight
+    def getSelected(self):
+        #print("getSelected is called")
+        s = self.dict[self.current].randomSelect()
+        return s
+
+
+
+
+
+import random
+
+class Neighbor(object):
+    def __init__(self,state):
+        self.prev = state
+        self.dict = {}
+        self.total = 0 #sum of all neighbor's frequencies
+    
+    def add(self, state):
+        self.total += 1
+        if state not in self.dict:
+            self.dict[state] = 1
+        else:
+            num = self.dict[state] + 1
+            self.dict[state] = num
+
+    def getAllKeys(self):
+        return self.dict.keys()
+
+    def randomSelect(self):
+        n = random.randint(1,self.total)
+        #print(n)
+        for state,freq in self.dict.items():
+            n -= freq
+            if n <= 0:
+                #print("FIND IT !!!!!!", state)
+                return state
+
+        #print("!!!!!!!NO!!!!!!")
+        return "DEBUG: no token being selected"
+
+
+
+
+
+
+
+
+    
+
 
