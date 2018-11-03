@@ -9,23 +9,26 @@ class Graph(object):
     
     def __init__(self,state):
         self.dict = {} # key is state, value is its Neighbors
-        self.current = state
-        self.dict[self.current] = Neighbor(state)
+        self.prev = state
+        self.dict[self.prev] = Neighbor(state)
+    
 
             
     def addNeighbor(self,state):
         if state not in self.dict:
             self.dict[state] = Neighbor(state)
-        self.dict[self.current].add(state)
-        self.current = state
+        
+        self.dict[self.prev].add(state)
+        self.prev = state
+        
 
     def getNeighbors(self,state):
         return self.dict[state]
 
-    # return a token that is randomly selected according to weight
-    def getSelected(self):
-        #print("getSelected is called")
-        s = self.dict[self.current].randomSelect()
+
+    def getSelected(self, current):
+        
+        s = self.dict[current].randomSelect()
         return s
 
 

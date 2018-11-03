@@ -222,21 +222,18 @@ class RandomWriter(object):
         """
         #print("------------DEBUG-------------")
         start = random.choice(list(self.g.dict.keys()))
-        self.g.current = start
+        current = start
         while True:
             if self.g is not None:
-                #print(self.g.current)
-                if self.g.getNeighbors(self.g.current).total == 0:
+                if self.g.getNeighbors(current).total == 0:
                     #print("No neighbors!!!")
                     start = random.choice(list(self.g.dict.keys()))
-                    self.g.current = start
-                    #print(self.g.current, "new start state")
+                    current = start
                 else:
                     #print("Has neighbor!!!")
-                    self.g.current = self.g.getSelected()
+                    current = self.g.getSelected(current)
                     #print("random selected!!!!!!!")
-                    yield self.g.current[-1]
-
+                    yield current[-1]
         
         
 
@@ -261,13 +258,14 @@ class RandomWriter(object):
             if self.token == Tokenization(3):
                 with open(filename, 'wb') as f:
                     for i in range(amount):
-                        f.write(bytes(next(g))) # next(g)?????
+                        b = bytes(next(g))
+                        #print(b)
+                        f.write(b)
             else:
                 with open(filename, 'w', encoding = "utf-8") as f:
                     for i in range(amount):
                         f.write(str(next(g)))
         else:
-            #g = itertools.islice(g, amount)
             with open(filename, 'w', encoding = "utf-8") as f:
                 for i in range(amount-1):
                     f.write(str(next(g)) + " ")
@@ -391,7 +389,6 @@ class RandomWriter(object):
         temp = []
         it = iter(data)
 
-        #print(it)
         end = False
         while not end: # [0,length of it list - level]
             try:
@@ -406,8 +403,8 @@ class RandomWriter(object):
                     else:
                         self.g.addNeighbor(tuple(state))
                     temp = temp[1:]
-        #for k,v in self.g.dict.items():
-        #   print(type(k),k,v.dict)
+        for k,v in self.g.dict.items():
+           print(type(k),k,v.dict)
         
 
 
