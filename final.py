@@ -180,6 +180,7 @@ http://www.gutenberg.org/cache/epub/100/pg100.txt
 from enum import Enum, unique
 from collections import Iterable
 import requests
+import urllib
 import random
 from graph import Graph
 import pickle
@@ -204,15 +205,9 @@ class RandomWriter(object):
         self.level = level
         self.data = None
         self.g = None
-        self.token = Tokenization(0)
-        if tokenization == Tokenization.word.name:
-            self.token = Tokenization(1)
-        elif tokenization == Tokenization.character.name:
-            self.token = Tokenization(2)
-        elif tokenization == Tokenization.byte.name:
-            self.token = Tokenization(3)
+        self.token = tokenization if tokenization is not None else Tokenization(0)
+    
         
-        self.output = []
 
     def generate(self):
         """Generate tokens using the model.
@@ -240,7 +235,7 @@ class RandomWriter(object):
                     #print("Has neighbor!!!")
                     self.g.current = self.g.getSelected()
                     #print("random selected!!!!!!!")
-                    yield self.g.current
+                    yield self.g.current[-1]
 
         
         
@@ -272,10 +267,11 @@ class RandomWriter(object):
                     for i in range(amount):
                         f.write(str(next(g)))
         else:
-            g = itertools.islice(g, amount)
+            #g = itertools.islice(g, amount)
             with open(filename, 'w', encoding = "utf-8") as f:
-                for i in range(amount):
-                    f.write(str(next(g)))
+                for i in range(amount-1):
+                    f.write(str(next(g)) + " ")
+                f.write(str(next(g)))
         
         
 
@@ -335,17 +331,27 @@ class RandomWriter(object):
         Do not duplicate any code from train_iterable.
 
         """
-        if self.token == Tokenization.none:
+        """
+        if self.token == Tokenization(0):
             raise Exception("tokenization mode is none!")
-        
-        response = requests.get(url)
+    
+        f = urllib.request.urlopen(url).read()
         if self.token == Tokenization(3):
-            self.data = bytes(response.text, 'utf-8')#response.text.encode()
+            self.data = bytes(f)#bytes(response.text, 'utf-8')#
         else:
-            self.date = response.text
+            self.data = str(f)
         
         self.train_iterable(self.data)
-
+        """
+        response = requests.get(url)
+        if self.token == Tokenization(3):
+            self.data = bytes(response.text, 'utf-8')#response.text.encode()#
+        else:
+            self.data = response.text
+        
+        self.train_iterable(self.data)
+        
+            
         
         
 
@@ -368,35 +374,40 @@ class RandomWriter(object):
         # you need to convert iterables, remember how much I hate
         # indexing into lists and that not every iterable you get here
         # will support indexing.
-        it = []
         if self.token == Tokenization(0):
             if not(isinstance(data, Iterable)):
                 raise TypeError("data should be iterable")
         elif self.token == Tokenization (1) or self.token == Tokenization(2):
             if not(isinstance(data, str)):
                 raise TypeError("data should be string")
+            data = data.split() if self.token == Tokenization (1) else data
         elif self.token == Tokenization(3):
             if not(isinstance(data, bytes)):
-                raise TypeError("data should be string")
+                raise TypeError("data should be byte")
+            #print("---------DEBUG---------\n",data)
         else:
             raise Exception("invalid tokenization")
 
-        if self.token == Tokenization (1):
-            it = data.split()
-        else:
-            it = list(data)
-        self.data = it
+        temp = []
+        it = iter(data)
+
         #print(it)
-        
-        for i in range(0, len(it) - self.level + 1): # [0,length of it list - level]
-            # credit from https://il.pycon.org/2016/static/sessions/omer-nevo.pdf
-            state = tuple(it[i:i+self.level])# get it[i],it[i+1],...,it[i+level-1]
-            if self.g is None:
-                self.g = Graph(state)
+        end = False
+        while not end: # [0,length of it list - level]
+            try:
+                temp.append(next(it))
+            except StopIteration as e:
+                end = True
             else:
-                self.g.addNeighbor(state)
+                if len(temp) == self.level:
+                    state = tuple(temp)
+                    if self.g is None:
+                        self.g = Graph(tuple(state))
+                    else:
+                        self.g.addNeighbor(tuple(state))
+                    temp = temp[1:]
         #for k,v in self.g.dict.items():
-        #    print(k,v.dict)
+        #   print(type(k),k,v.dict)
         
 
 

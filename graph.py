@@ -1,7 +1,7 @@
 import random
 
 class Graph(object):
-    """A constuctor that can read the input
+    """A constuctor that can read/Users/user/Desktop/final_project/final.py the input
     and build according probability model
     dict:{state:Neighbors}
     Neighbors:{token:freq}
