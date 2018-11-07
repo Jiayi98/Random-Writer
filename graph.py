@@ -7,14 +7,14 @@ class Graph(object):
     Neighbors:{token:freq}
     """
     
-    def __init__(self,state):
+    def __init__(self, state):
         self.dict = {} # key is state, value is its Neighbors
         self.prev = state
         self.dict[self.prev] = Neighbor(state)
     
 
             
-    def addNeighbor(self,state):
+    def addNeighbor(self, state):
         if state not in self.dict:
             self.dict[state] = Neighbor(state)
         
@@ -22,12 +22,11 @@ class Graph(object):
         self.prev = state
         
 
-    def getNeighbors(self,state):
+    def getNeighbors(self, state):
         return self.dict[state]
 
 
     def getSelected(self, current):
-        
         s = self.dict[current].randomSelect()
         return s
 
@@ -40,7 +39,7 @@ import random
 class Neighbor(object):
     def __init__(self,state):
         self.prev = state
-        self.dict = {}
+        self.dict = {} # key is state; value is its frequency
         self.total = 0 #sum of all neighbor's frequencies
     
     def add(self, state):
@@ -51,9 +50,6 @@ class Neighbor(object):
             num = self.dict[state] + 1
             self.dict[state] = num
 
-    def getAllKeys(self):
-        return self.dict.keys()
-
     def randomSelect(self):
         n = random.randint(1,self.total)
         #print(n)
@@ -63,8 +59,7 @@ class Neighbor(object):
                 #print("FIND IT !!!!!!", state)
                 return state
 
-        #print("!!!!!!!NO!!!!!!")
-        return "DEBUG: no token being selected"
+        #return "DEBUG: no token being selected"
 
 
 

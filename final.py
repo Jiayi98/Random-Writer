@@ -177,14 +177,12 @@ want to use the complete works of Shakespeare:
 http://www.gutenberg.org/cache/epub/100/pg100.txt
 
 """
-from enum import Enum, unique
+from enum import Enum
 from collections import Iterable
 import requests
-import urllib
 import random
 from graph import Graph
 import pickle
-import itertools
 
 class RandomWriter(object):
     """A Markov chain based random data generator.
@@ -221,19 +219,20 @@ class RandomWriter(object):
 
         """
         #print("------------DEBUG-------------")
+        # a randomly selected start state
         start = random.choice(list(self.g.dict.keys()))
         current = start
         while True:
-            if self.g is not None:
-                if self.g.getNeighbors(current).total == 0:
-                    #print("No neighbors!!!")
-                    start = random.choice(list(self.g.dict.keys()))
-                    current = start
-                else:
-                    #print("Has neighbor!!!")
-                    current = self.g.getSelected(current)
-                    #print("random selected!!!!!!!")
-                    yield current[-1]
+            if self.g.getNeighbors(current).total == 0:
+                #a state that does nothave any outgoing edges
+                #print("----Debug ------- No neighbors!!!-------")
+                start = random.choice(list(self.g.dict.keys()))
+                current = start
+            else:
+                #print("Has neighbor!!!")
+                current = self.g.getSelected(current)
+                #print("random selected!!!!!!!")
+                yield current[-1]
         
         
 
@@ -258,15 +257,14 @@ class RandomWriter(object):
             if self.token == Tokenization(3):
                 with open(filename, 'wb') as f:
                     for i in range(amount):
-                        b = bytes(next(g))
-                        #print(b)
-                        f.write(b)
+                        f.write(bytes(next(g)))
             else:
                 with open(filename, 'w', encoding = "utf-8") as f:
                     for i in range(amount):
                         f.write(str(next(g)))
         else:
             with open(filename, 'w', encoding = "utf-8") as f:
+                #a space added between tokens
                 for i in range(amount-1):
                     f.write(str(next(g)) + " ")
                 f.write(str(next(g)))
@@ -285,12 +283,13 @@ class RandomWriter(object):
 
         """
         if hasattr(filename_or_file_object, "write"):
-            d = pickle.dump(self, filename_or_file_object)
+            # A filename
+            pickle.dump(self, filename_or_file_object)
        
         else:
              # file-like object
             with open(filename_or_file_object, 'wb') as f:
-                pickle.dump(self,f)
+                pickle.dump(self, f)
 
 
     @classmethod
@@ -309,6 +308,7 @@ class RandomWriter(object):
 
         """
         if hasattr(filename_or_file_object,"write"):
+            # A filename
             d = pickle.load(self, filename_or_file_object)
         else:
             # file-like object
@@ -329,21 +329,10 @@ class RandomWriter(object):
         Do not duplicate any code from train_iterable.
 
         """
-        """
-        if self.token == Tokenization(0):
-            raise Exception("tokenization mode is none!")
-    
-        f = urllib.request.urlopen(url).read()
-        if self.token == Tokenization(3):
-            self.data = bytes(f)#bytes(response.text, 'utf-8')#
-        else:
-            self.data = str(f)
-        
-        self.train_iterable(self.data)
-        """
+       
         response = requests.get(url)
         if self.token == Tokenization(3):
-            self.data = bytes(response.text, 'utf-8')#response.text.encode()#
+            self.data = bytes(response.text, 'utf-8')#response.text.encode()
         else:
             self.data = response.text
         
@@ -382,7 +371,6 @@ class RandomWriter(object):
         elif self.token == Tokenization(3):
             if not(isinstance(data, bytes)):
                 raise TypeError("data should be byte")
-            #print("---------DEBUG---------\n",data)
         else:
             raise Exception("invalid tokenization")
 
@@ -390,7 +378,7 @@ class RandomWriter(object):
         it = iter(data)
 
         end = False
-        while not end: # [0,length of it list - level]
+        while not end:
             try:
                 temp.append(next(it))
             except StopIteration as e:
@@ -403,8 +391,8 @@ class RandomWriter(object):
                     else:
                         self.g.addNeighbor(tuple(state))
                     temp = temp[1:]
-        for k,v in self.g.dict.items():
-           print(type(k),k,v.dict)
+        #for k,v in self.g.dict.items():
+        #   print(type(k),k,v.dict)
         
 
 
